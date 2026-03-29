@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>goAPPs|Pro Edition</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #062c1e; --card: #0a3d2a; --text: #ffffff;
+            --primary: #00d28d; --primary-glow: rgba(0, 210, 141, 0.3);
+            --input-bg: #0d4d36; --success: #10b981; --danger: #ff4d4d;
+            --premium: #f5c330; --white: #ffffff; --gray: #a0aec0;
+            --overlay: rgba(0,0,0,0.85);
+        }
+
+        .light-mode {
+            --bg: #f3f4f6; --card: #ffffff; --text: #1a1a1a;
+            --primary: #059669; --input-bg: #e5e7eb; --gray: #4b5563;
+        }
+
+        body { margin: 0; font-family: 'Inter', sans-serif; background-color: #111; color: var(--text); overflow-x: hidden; transition: 0.3s; }
+        .phone-container { width: 375px; height: 812px; background: var(--bg); margin: 20px auto; border-radius: 40px; overflow: hidden; position: relative; border: 8px solid #1a1a1a; display: flex; flex-direction: column; box-shadow: 0 25px 50px rgba(0,0,0,0.5); }
+        @media (max-width: 450px) { .phone-container { width: 100vw; height: 100vh; margin: 0; border: none; border-radius: 0; } }
+
+        /* Splash Screen */
+        #splash-screen { position: fixed; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; background: linear-gradient(135deg, #062c1e 0%, #00d28d 100%); z-index: 5000; transition: 0.6s; }
+        .spinner { width: 40px; height: 40px; border: 3px solid rgba(255,255,255,0.2); border-top-color: #fff; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        header { padding: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .main-scroll { flex: 1; overflow-y: auto; padding: 15px; padding-bottom: 100px; scrollbar-width: none; }
+        .balance-card { padding: 25px; background: linear-gradient(135deg, #00d28d 0%, #059669 100%); border-radius: 24px; position: relative; box-shadow: 0 10px 20px var(--primary-glow); color: white; margin-bottom: 30px; }
+
+        .card-container { perspective: 1000px; width: 100%; height: 180px; margin-bottom: 25px; cursor: pointer; }
+        .card-inner { position: relative; width: 100%; height: 100%; transition: 0.6s; transform-style: preserve-3d; }
+        .is-flipped .card-inner { transform: rotateY(180deg); }
+        .card-front, .card-back { position: absolute; inset: 0; backface-visibility: hidden; border-radius: 20px; padding: 20px; box-sizing: border-box; }
+        .card-front { background: linear-gradient(135deg, #1a1a1a 0%, #0d4d36 100%); border: 1px solid rgba(255,255,255,0.1); }
+        .card-back { background: #1a1a1a; transform: rotateY(180deg); display: flex; flex-direction: column; justify-content: center; }
+
+        .section-title { font-weight: 800; margin: 20px 0 10px; font-size: 0.9rem; display: flex; justify-content: space-between; align-items: center; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .service-item { background: var(--card); padding: 12px; border-radius: 16px; display: flex; align-items: center; gap: 10px; border: 1px solid rgba(255,255,255,0.05); font-size: 0.8rem; cursor: pointer; transition: 0.2s; }
+        .service-item:hover { transform: scale(1.02); background: var(--input-bg); }
+
+        .tx-list { background: var(--card); border-radius: 20px; padding: 15px; margin-top: 10px; }
+        .tx-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.75rem; }
+        .tx-amt-pos { color: var(--primary); font-weight: 800; }
+        .tx-amt-neg { color: var(--danger); font-weight: 800; }
+
+        .modal { position: absolute; inset: 0; background: var(--bg); z-index: 3000; display: none; flex-direction: column; padding: 30px; overflow-y: auto; }
+        .btn-action { width: 100%; padding: 14px; border-radius: 12px; border: none; font-weight: 800; cursor: pointer; margin-top: 10px; transition: 0.2s; background: var(--primary); color: #062c1e; }
+        .btn-cancel { background: transparent; color: var(--gray); margin-top: 10px; border: none; width: 100%; cursor: pointer; }
+        .input-group { background: var(--input-bg); padding: 12px; border-radius: 12px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.1); }
+        .input-group input { background: transparent; border: none; color: white; width: 100%; outline: none; font-size: 1rem; }
+
+        nav { display: flex; justify-content: space-around; padding: 15px 0 25px; background: var(--card); position: absolute; bottom: 0; width: 100%; border-top: 1px solid rgba(255,255,255,0.05); }
+        nav a { text-decoration: none; color: var(--text); opacity: 0.5; font-size: 0.65rem; text-align: center; }
+        nav a.active { opacity: 1; color: var(--primary); }
+
+        .hidden { display: none !important; }
+        .badge-pro { background: var(--premium); color: #000; padding: 2px 8px; border-radius: 4px; font-size: 0.6rem; font-weight: 800; }
+    </style>
+</head>
+<body>
+
+    <div id="splash-screen">
+        <h1 style="font-size: 2.2rem; font-weight: 800; color: white;">goAPPs<span style="background:rgba(255,255,255,0.2); padding:2px 8px; border-radius:6px; margin-left:5px;">NG</span></h1>
+        <div class="spinner"></div>
+        <p style="font-size: 0.7rem; color: white; opacity: 0.8; letter-spacing: 1px;">INITIALIZING SECURE WALLET...</p>
+    </div>
+
+    <div class="phone-container">
+        <header>
+            <div style="font-weight: 800; font-size: 1.1rem;">goAPPs</div>
+            <div id="premium-indicator" class="hidden"><span class="badge-pro">PRO EDITION</span></div>
+            <div style="cursor: pointer; font-size: 1.2rem;" onclick="toggleTheme()">🌓</div>
+        </header>
+
+        <div class="main-scroll">
+            <div class="card-container" onclick="this.classList.toggle('is-flipped')">
+                <div class="card-inner">
+                    <div class="card-front">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div style="width: 40px; height: 30px; background: linear-gradient(135deg, #ffd700, #b8860b); border-radius: 4px;"></div>
+                            <span style="font-size: 0.6rem; opacity: 0.6;">VIRTUAL NG DEBIT</span>
+                        </div>
+                        <div style="margin-top: 30px; font-family: monospace; font-size: 1.2rem; letter-spacing: 2px;">**** **** **** 52A3</div>
+                        <div style="margin-top: 20px; font-size: 0.7rem; text-transform: uppercase;" id="user-display-name">DIGITAL USER</div>
+                    </div>
+                    <div class="card-back">
+                        <div style="height: 35px; background: #000; width: 100%; margin-bottom: 20px;"></div>
+                        <div style="padding: 0 20px;">
+                            <small style="font-size: 0.5rem; opacity: 0.7;">CVV</small>
+                            <div style="background: white; color: black; padding: 5px; width: 40px; text-align: center; border-radius: 4px; font-weight: 800;">882</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="balance-card">
+                <small>Available Token Balance</small>
+                <div style="display: flex; align-items: center; gap: 10px; margin: 8px 0;">
+                    <h2 id="balance-display" style="font-size: 1.8rem; margin: 0;">₦0.00</h2>
+                    <div onclick="openModal('reveal-modal')" style="cursor: pointer;">👁️</div>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.75rem; opacity: 0.9;">
+                    <span>Bonus: 🏆 2.00 gc</span>
+                    <span id="tier-text">Free Tier</span>
+                </div>
+                <button class="btn-action" style="background: rgba(255,255,255,0.2); color: white; margin-top: 15px;" onclick="openModal('topup-modal')">Deposit Funds</button>
+            </div>
+
+            <div class="section-title">
+                <span>Connect goAPPs</span>
+                <small style="color: var(--primary); cursor: pointer;" onclick="openModal('market-modal')">Open Market 🏪</small>
+            </div>
+            <div class="grid" id="connected-apps-grid"></div>
+
+            <h3 class="section-title">Recent Activity 📜</h3>
+            <div class="tx-list" id="transaction-feed">
+                <p style="text-align: center; font-size: 0.7rem; opacity: 0.5; padding: 10px;">No transactions recorded.</p>
+            </div>
+        </div>
+
+        <nav>
+            <a href="#" class="active">🏠<br>Home</a>
+            <a href="#" onclick="openModal('topup-modal')">💳<br>Top-up</a>
+            <a href="#" onclick="openModal('market-modal')">🏪<br>Market</a>
+            <a href="https://goapps-official.github.io/Welcome-to-goAPPs/HomeApp/profile_page.html">⚙️<br>Settings</a>
+        </nav>
+    </div>
+
+    <div id="topup-modal" class="modal">
+        <h3 style="text-align: center;">Wallet Top-up</h3>
+        <div style="background: rgba(0,210,141,0.1); padding: 15px; border-radius: 15px; border: 1px dashed var(--primary); font-size: 0.85rem; margin-bottom: 20px;">
+            <b style="color: var(--primary);">Bank: GTBank</b><br>
+            <b>Account: DigitalSolution360</b><br>
+            <b>Number: 0265544737</b>
+        </div>
+        <div class="input-group"><input type="number" id="topup-amount" placeholder="Amount (₦)"></div>
+        <div class="input-group"><input type="text" id="topup-code" placeholder="Top-up/Transfer Code"></div>
+        <button class="btn-action" onclick="executeTopup()">Confirm Deposit</button>
+        <button class="btn-cancel" onclick="closeModals()">Cancel</button>
+    </div>
+
+    <div id="market-modal" class="modal">
+        <h3 style="text-align: center;">App Marketplace</h3>
+        <div class="grid" id="market-list"></div>
+        <div id="upgrade-section" style="margin-top:20px;">
+            <p style="font-size: 0.7rem; text-align: center;">Upgrade for unlimited slots.</p>
+            <button class="btn-action" style="background: var(--premium);" onclick="upgradePro()">Upgrade to Pro (₦5,000)</button>
+        </div>
+        <button class="btn-cancel" onclick="closeModals()">Close</button>
+    </div>
+
+    <div id="reveal-modal" class="modal" style="justify-content: center;">
+        <div style="background: var(--card); padding: 25px; border-radius: 20px; text-align: center;">
+            <h3>Verify Identity</h3>
+            <input type="number" id="wa-num" placeholder="080XXXXXXXX" style="width: 100%; padding: 12px; border-radius: 8px; background: #0d4d36; color: white; border: none; margin: 10px 0;">
+            <button class="btn-action" onclick="alert('OTP Sent!')">Request Code</button>
+            <button class="btn-cancel" onclick="closeModals()">Cancel</button>
+        </div>
+    </div>
+
+    <script>
+        let userData = {
+            balance: 5600.00,
+            isPro: false,
+            apps: [
+                {n:'goPROTECT', i:'👨‍✈️', url: '#'}, 
+                {n:'goMETRO', i:'🚌', url: '#'}, 
+                {n:'goNEWs', i:'🗞', url: '#'}
+            ],
+            history: []
+        };
+
+        const marketItems = [
+            {n:'goCBT', i:'🎓', url: 'https://goapps-official.github.io/Welcome-to-goAPPs/goCBT/index.html'}, 
+            {n:'goRIDEs', i:'🚗', url: 'https://5050smartussd.github.io/DigitalAssistants/roadlink.html'}, 
+            {n:'goMEDIC', i:'🚑', url: 'https://goapps-official.github.io/Welcome-to-goAPPs/goMEDIC/index.html'}, 
+            {n:'goSHOP', i:'🛒', url: 'https://5050smartussd.github.io/DigitalAssistants/ViSha_v2'}, 
+            {n:'goTRIPs', i:'✈', url: '#'}, 
+            {n:'SwapR', i:'💱', url: '#'}
+        ];
+
+        window.onload = () => {
+            setTimeout(() => {
+                document.getElementById('splash-screen').style.opacity = '0';
+                setTimeout(() => { document.getElementById('splash-screen').style.display = 'none'; animateBalance(0, userData.balance); }, 600);
+            }, 1500);
+            renderDashboard();
+        };
+
+        function renderDashboard() {
+            const grid = document.getElementById('connected-apps-grid');
+            grid.innerHTML = userData.apps.map(app => `
+                <a href="${app.url}" target="_blank" style="text-decoration:none; color:inherit;">
+                    <div class="service-item"><span>${app.i}</span><b>${app.n}</b></div>
+                </a>`).join('');
+
+            const mList = document.getElementById('market-list');
+            mList.innerHTML = marketItems.map(item => `
+                <div class="service-item" onclick="connectApp('${item.n}', '${item.i}', '${item.url}')">
+                    <span>${item.i}</span><small>${item.n}</small>
+                </div>`).join('');
+
+            document.getElementById('tier-text').innerText = userData.isPro ? "Pro Edition (Unlimited)" : `Free Tier (${userData.apps.length}/3)`;
+            if(userData.isPro) {
+                document.getElementById('premium-indicator').classList.remove('hidden');
+                document.getElementById('upgrade-section').classList.add('hidden');
+            }
+        }
+
+        function connectApp(n, i, url) {
+            if(!userData.isPro && userData.apps.length >= 3) return alert("Upgrade to Pro for more slots!");
+            if(userData.apps.find(a => a.n === n)) return alert("Already connected.");
+            userData.apps.push({n, i, url});
+            renderDashboard();
+            closeModals();
+        }
+
+        function animateBalance(start, end) {
+            const el = document.getElementById('balance-display');
+            let curr = start; const step = (end - start) / 40;
+            const timer = setInterval(() => {
+                curr += step;
+                if((step > 0 && curr >= end) || (step < 0 && curr <= end)) {
+                    el.innerText = `₦${end.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+                    clearInterval(timer);
+                } else { el.innerText = `₦${curr.toLocaleString(undefined, {minimumFractionDigits: 2})}`; }
+            }, 30);
+        }
+
+        function executeTopup() {
+            const amt = parseFloat(document.getElementById('topup-amount').value);
+            const code = document.getElementById('topup-code').value;
+            if(!amt || code.length < 3) return alert("Invalid details.");
+            sendEmailAlert("DEPOSIT REQUEST", {amount: amt, code: code});
+            const old = userData.balance; userData.balance += amt;
+            addHistory("Deposit Verified", amt, 'pos');
+            closeModals(); animateBalance(old, userData.balance);
+        }
+
+        async function sendEmailAlert(type, details) {
+            try {
+                await fetch('https://formspree.io/f/mwvredjp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ subject: type, message: JSON.stringify(details) })
+                });
+            } catch (e) { console.error(e); }
+        }
+
+        function upgradePro() {
+            if(userData.balance < 5000) return alert("Insufficient balance.");
+            userData.balance -= 5000; userData.isPro = true;
+            renderDashboard(); closeModals();
+        }
+
+        function addHistory(title, amt, type) {
+            const date = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            userData.history.unshift({title, amt, type, date});
+            document.getElementById('transaction-feed').innerHTML = userData.history.map(item => `
+                <div class="tx-item">
+                    <div><b>${item.title}</b><br><small style="opacity:0.6">${item.date}</small></div>
+                    <div class="${item.type === 'pos' ? 'tx-amt-pos' : 'tx-amt-neg'}">₦${item.amt.toLocaleString()}</div>
+                </div>`).join('');
+        }
+
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModals() { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); }
+        function toggleTheme() { document.body.classList.toggle('light-mode'); }
+    </script>
+</body>
+</html>

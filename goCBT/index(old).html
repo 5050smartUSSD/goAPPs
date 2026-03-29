@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>🎓 goCBT | goAPPs by DigitalSolution</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* ── TOKENS ── */
+:root{
+  --green:#00d28d;--purple:#4b44e0;
+  --grad:linear-gradient(135deg,#00d28d 0%,#4b44e0 100%);
+  --bg:#0f0f0f;--surface:#1a1a1a;--card:#222;--card2:#2a2a2a;
+  --border:#2e2e2e;--text:#f0f0f0;--sub:#888;--danger:#ff4d4d;
+  --glow:0 4px 24px rgba(0,210,141,.2);
+  --primary:#00d28d;--input-bg:#1e2e26;--overlay:rgba(0,0,0,0.8);
+  --switch-track:rgba(255,255,255,0.15);
+}
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Inter',sans-serif;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--green);border-radius:2px}
+a{text-decoration:none;color:inherit}
+button{cursor:pointer;font-family:'Inter',sans-serif;border:none;background:none}
+
+/* ── SPLASH ── */
+#splash{position:fixed;inset:0;background:linear-gradient(135deg,#062c1e 0%,#00d28d 100%);
+  z-index:5000;display:flex;flex-direction:column;justify-content:center;align-items:center;
+  text-align:center;transition:opacity .6s ease}
+#splash.hide{opacity:0;pointer-events:none}
+.spin{width:38px;height:38px;border:3px solid rgba(255,255,255,.25);border-top-color:#fff;
+  border-radius:50%;margin:18px auto;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── OFFLINE ── */
+#offline-screen{display:none;position:fixed;inset:0;background:var(--bg);z-index:4000;
+  flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:28px}
+#offline-screen.show{display:flex}
+
+/* ── PUSH NOTIFICATION ── */
+#push-notif{
+  position:fixed;top:-80px;left:50%;transform:translateX(-50%);
+  width:calc(100% - 28px);max-width:520px;
+  background:var(--card);border:1px solid var(--green);
+  border-radius:16px;padding:12px 16px;
+  display:flex;align-items:center;gap:12px;
+  z-index:3500;box-shadow:0 8px 28px rgba(0,0,0,.55);
+  transition:top .45s cubic-bezier(.175,.885,.32,1.275)
+}
+#push-notif.show{top:12px}
+.notif-ico{width:34px;height:34px;border-radius:9px;background:var(--grad);
+  display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.85rem;color:#fff;flex-shrink:0}
+.notif-ttl{font-size:.72rem;font-weight:800;color:var(--green)}
+.notif-body{font-size:.63rem;color:var(--sub);margin-top:2px}
+
+/* ══════════════════════════════════════
+   SIDE MENU — goAPPs Nigeria style
+══════════════════════════════════════ */
+#menu-overlay{position:fixed;inset:0;background:var(--overlay);backdrop-filter:blur(3px);z-index:800;opacity:0;pointer-events:none;transition:.3s}
+#menu-overlay.open{opacity:1;pointer-events:auto}
+#side-menu{
+  position:fixed;left:-310px;top:0;width:310px;height:100%;
+  background:var(--surface);z-index:900;
+  display:flex;flex-direction:column;
+  padding:0 20px 20px;
+  border-right:1px solid var(--border);
+  box-sizing:border-box;overflow-y:auto;scrollbar-width:none;
+  transition:left .4s cubic-bezier(.4,0,.2,1);
+}
+#side-menu::-webkit-scrollbar{display:none}
+#side-menu.open{left:0;box-shadow:8px 0 36px rgba(0,0,0,.6)}
+
+.side-menu-top{padding:40px 0 10px;flex-shrink:0}
+.side-support-btn{width:100%;padding:10px;border-radius:10px;background:var(--grad);color:#fff;
+  border:none;font-weight:800;font-size:.8rem;cursor:pointer;margin-bottom:14px;
+  display:flex;align-items:center;justify-content:center;gap:6px}
+.profile-area{display:flex;align-items:center;gap:12px;cursor:pointer;padding:8px 0;margin-bottom:6px}
+.profile-avatar{width:48px;height:48px;border-radius:14px;overflow:hidden;flex-shrink:0;border:2px solid var(--green)}
+.profile-avatar canvas{display:block;width:100%;height:100%}
+
+.menu-item{display:flex;align-items:center;gap:15px;padding:12px 0;color:var(--text);
+  text-decoration:none;font-size:.85rem;border-bottom:1px solid rgba(255,255,255,.05);cursor:pointer}
+.menu-item:hover{color:var(--green)}
+
+.switch{position:relative;display:inline-block;width:40px;height:20px}
+.switch input{opacity:0;width:0;height:0}
+.slider-sw{position:absolute;cursor:pointer;inset:0;background-color:var(--switch-track);transition:.4s;border-radius:20px}
+.slider-sw:before{position:absolute;content:"";height:14px;width:14px;left:3px;bottom:3px;background-color:white;transition:.4s;border-radius:50%}
+input:checked + .slider-sw{background-color:var(--green)}
+input:checked + .slider-sw:before{transform:translateX(20px)}
+
+/* ── HEADER ── */
+.hdr{
+  position:sticky;top:0;z-index:400;
+  background:var(--bg);border-bottom:1px solid var(--border);
+  padding:12px 16px;display:flex;align-items:center;justify-content:space-between
+}
+.hdr-l{display:flex;align-items:center;gap:10px}
+.ham{display:flex;flex-direction:column;gap:5px;padding:4px;cursor:pointer}
+.ham span{display:block;height:2px;border-radius:2px;background:var(--green);transition:.28s}
+.ham span:nth-child(1){width:22px}
+.ham span:nth-child(2){width:15px}
+.ham span:nth-child(3){width:22px}
+.ham.open span:nth-child(1){transform:translateY(7px) rotate(45deg);width:22px}
+.ham.open span:nth-child(2){opacity:0;width:22px}
+.ham.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+.hdr-logo{font-size:.96rem;font-weight:800;letter-spacing:-.2px;
+  background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hdr-r{display:flex;align-items:center;gap:9px}
+.hpill{padding:5px 11px;border-radius:16px;font-size:.62rem;font-weight:700}
+.hp-str{background:rgba(0,210,141,.1);border:1px solid rgba(0,210,141,.25);color:var(--green)}
+.hp-xp{background:rgba(75,68,224,.12);border:1px solid rgba(75,68,224,.3);color:#a5b4fc}
+.hdr-av{width:32px;height:32px;border-radius:50%;background:var(--grad);display:flex;align-items:center;
+  justify-content:center;font-size:.82rem;overflow:hidden;flex-shrink:0;cursor:pointer;
+  border:2px solid rgba(0,210,141,.35)}
+.hdr-av img{width:100%;height:100%;object-fit:cover}
+
+/* ── RSS TICKER — FASTER ── */
+.ticker-wrap{background:rgba(0,210,141,.06);border-bottom:1px solid rgba(0,210,141,.15);
+  padding:7px 0;overflow:hidden;position:relative}
+.ticker-wrap::before{content:'📢';position:absolute;left:0;top:50%;transform:translateY(-50%);
+  background:var(--green);padding:4px 10px;font-size:.7rem;z-index:2;border-radius:0 6px 6px 0}
+.ticker-track{display:flex;gap:0;animation:ticker 12s linear infinite;padding-left:100%;white-space:nowrap}
+.ticker-track:hover{animation-play-state:paused}
+.ticker-item{display:inline-flex;align-items:center;gap:8px;font-size:.68rem;font-weight:600;
+  color:var(--green);padding-right:60px;white-space:nowrap}
+.ticker-dot{width:5px;height:5px;border-radius:50%;background:var(--green);opacity:.5;flex-shrink:0}
+@keyframes ticker{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+
+/* ── MAIN ── */
+.main{padding-bottom:76px}
+
+/* ── BALANCE CARD ── */
+.bal-card{background:var(--grad);border-radius:22px;padding:20px 20px 30px;
+  position:relative;overflow:hidden;box-shadow:var(--glow);margin-bottom:14px}
+.bal-card::after{content:'';position:absolute;bottom:-14px;left:-14px;right:-14px;
+  height:60px;background:rgba(255,255,255,.06);border-radius:50%}
+.bc-wlc{font-size:.66rem;color:rgba(255,255,255,.82);font-weight:600}
+.bc-name{font-size:1.25rem;font-weight:800;color:#fff;margin:4px 0 14px;letter-spacing:-.2px}
+.bc-row{display:flex;justify-content:space-between;font-size:.75rem;color:rgba(255,255,255,.88);margin-bottom:4px}
+.bc-total{display:flex;justify-content:space-between;align-items:center;margin-top:10px}
+.bc-tlbl{font-size:.72rem;color:rgba(255,255,255,.82);font-weight:600}
+.bc-tval{font-size:1.6rem;font-weight:800;color:#fff;font-family:'JetBrains Mono',monospace}
+.bc-add{position:absolute;bottom:-19px;left:50%;transform:translateX(-50%);
+  width:42px;height:42px;background:var(--green);color:#fff;border:4px solid var(--bg);
+  border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:1.5rem;font-weight:800;cursor:pointer;z-index:2;
+  box-shadow:0 4px 14px rgba(0,210,141,.4);transition:.15s;text-decoration:none}
+.bc-add:active{transform:translateX(-50%) scale(1.1)}
+
+/* ── IMAGE BANNER SLIDER ── */
+.banner-wrap{margin:26px 0 14px;position:relative;overflow:hidden;border-radius:18px;box-shadow:var(--glow)}
+.banner-track{display:flex;transition:transform .5s cubic-bezier(.4,0,.2,1)}
+.banner-slide{min-width:100%;height:150px;border-radius:18px;position:relative;overflow:hidden;flex-shrink:0}
+.banner-slide img{width:100%;height:100%;object-fit:cover}
+.banner-slide .bs-overlay{position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(0,0,0,.55) 0%,rgba(0,0,0,.15) 100%);
+  display:flex;flex-direction:column;justify-content:flex-end;padding:14px 16px}
+.bs-tag{font-size:.55rem;font-weight:800;padding:3px 8px;border-radius:5px;
+  background:var(--green);color:#000;display:inline-block;margin-bottom:5px;width:fit-content}
+.bs-title{font-size:.9rem;font-weight:800;color:#fff;line-height:1.25}
+.bs-sub{font-size:.63rem;color:rgba(255,255,255,.8);margin-top:2px}
+.bs-color-1{background:linear-gradient(135deg,#00d28d,#4b44e0)}
+.bs-color-2{background:linear-gradient(135deg,#ff6b35,#f7931e)}
+.bs-color-3{background:linear-gradient(135deg,#4b44e0,#7c3aed)}
+.bs-color-4{background:linear-gradient(135deg,#0ea5e9,#00d28d)}
+.banner-dots{display:flex;justify-content:center;gap:6px;margin-top:9px}
+.b-dot{width:6px;height:6px;border-radius:50%;background:var(--border);transition:.3s;cursor:pointer}
+.b-dot.on{width:18px;background:var(--green);border-radius:4px}
+.banner-arrow{position:absolute;top:50%;transform:translateY(-50%);
+  width:30px;height:30px;border-radius:50%;background:rgba(0,0,0,.45);
+  display:flex;align-items:center;justify-content:center;color:#fff;font-size:.75rem;
+  cursor:pointer;z-index:3;border:none;transition:.2s}
+.banner-arrow:hover{background:rgba(0,0,0,.7)}
+.banner-arrow.prev{left:10px}
+.banner-arrow.next{right:10px}
+
+/* ── INFO BANNER ── */
+.info-banner{background:var(--card);border:1px solid var(--border);border-radius:13px;
+  padding:11px 14px;display:flex;align-items:center;gap:11px;
+  margin-bottom:14px;font-size:.68rem;color:var(--sub);line-height:1.4}
+
+/* ── APPLY CARD ── */
+.apply-card{display:flex;align-items:center;gap:14px;background:var(--grad);color:#fff;
+  border-radius:16px;padding:16px 14px;margin-bottom:14px;cursor:pointer;
+  box-shadow:var(--glow);transition:.15s}
+.apply-card:active{transform:scale(.98)}
+.apply-icon{font-size:1.6rem;flex-shrink:0}
+.apply-card b{font-size:.9rem;font-weight:800;display:block}
+.apply-card small{font-size:.65rem;opacity:.82;line-height:1.3}
+.apply-arr{margin-left:auto;font-size:1.2rem;opacity:.75}
+
+/* ── SECTION HEADER ── */
+.sec-hdr{display:flex;align-items:center;justify-content:space-between;margin:16px 0 11px}
+.sec-ttl{font-size:.88rem;font-weight:800;color:var(--text);display:flex;align-items:center;gap:8px}
+.sec-ttl::before{content:'';width:3px;height:16px;background:var(--green);border-radius:2px;display:block}
+
+/* ── SERVICE GRID ── */
+.svc-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.svc-item{display:flex;align-items:center;gap:11px;padding:13px 12px;
+  background:var(--card);border:1px solid var(--border);border-radius:16px;
+  cursor:pointer;transition:.18s;text-decoration:none;position:relative;overflow:hidden}
+.svc-item::before{content:'';position:absolute;left:0;top:0;bottom:0;
+  width:3px;background:transparent;border-radius:3px 0 0 3px;transition:.2s}
+.svc-item:hover::before,.svc-item:active::before{background:var(--green)}
+.svc-item:hover{border-color:rgba(0,210,141,.3);background:rgba(0,210,141,.04);transform:translateY(-1px)}
+.svc-item:active{transform:scale(.96)}
+.svc-item.hi{background:var(--grad);border:none;box-shadow:0 4px 14px rgba(0,210,141,.25)}
+.svc-item.hi:hover{transform:translateY(-1px);box-shadow:0 7px 20px rgba(0,210,141,.35)}
+.svc-item.hi::before{display:none}
+.s-ico{font-size:1.2rem;flex-shrink:0}
+.s-name{font-size:.78rem;font-weight:800;display:block;color:var(--text)}
+.s-sub{font-size:.6rem;color:var(--sub)}
+.svc-item.hi .s-name,.svc-item.hi .s-sub{color:#fff}
+.svc-item.hi .s-sub{opacity:.82}
+
+/* ── PROMO STRIP ── */
+.promo-strip{display:flex;justify-content:center;margin:4px 0 16px}
+.promo-btn{display:inline-flex;align-items:center;gap:7px;
+  background:rgba(0,210,141,.08);border:1px solid rgba(0,210,141,.3);
+  border-radius:30px;padding:9px 18px;color:var(--green);
+  font-size:.72rem;font-weight:800;cursor:pointer;transition:.2s;text-decoration:none}
+.promo-btn:hover{background:rgba(0,210,141,.14);transform:translateY(-1px)}
+
+/* ══════════════════════════════
+   BOTTOM NAV — goAPPs NG style
+══════════════════════════════ */
+.bnav{
+  position:fixed;bottom:0;left:0;right:0;
+  background:var(--surface);
+  border-top:1px solid var(--border);
+  display:flex;align-items:stretch;
+  z-index:300;
+  padding-bottom:env(safe-area-inset-bottom,0);
+  height:auto;
+  min-height:58px;
+  padding-top:0;
+}
+.bn{
+  flex:1;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:3px;
+  padding:10px 0 max(14px,env(safe-area-inset-bottom));
+  cursor:pointer;color:var(--sub);
+  font-size:.58rem;font-weight:700;transition:.15s;
+  text-decoration:none;background:none;border:none;
+  position:relative;
+}
+.bn.on,.bn:hover{color:var(--green)}
+.bn-ico{font-size:1.15rem;display:block}
+.bn.on::after{content:'';position:absolute;top:0;left:15%;right:15%;
+  height:2.5px;background:var(--grad);border-radius:0 0 4px 4px}
+
+/* ── MODALS ── */
+.mov{position:fixed;inset:0;background:rgba(0,0,0,.88);display:none;z-index:1000;
+  align-items:center;justify-content:center;backdrop-filter:blur(6px)}
+.mov.open{display:flex}
+.modal{background:var(--card);width:92%;max-width:440px;border-radius:22px;padding:22px;
+  border:1px solid var(--border);max-height:92vh;overflow-y:auto}
+.mcl{background:none;border:none;font-size:1.3rem;color:var(--sub);line-height:1;float:right;cursor:pointer}
+.pinp{width:100%;padding:10px 13px;border-radius:11px;border:1.5px solid var(--border);
+  background:rgba(255,255,255,.04);color:var(--text);font-size:.82rem;
+  font-family:'Inter',sans-serif;outline:none;margin-bottom:10px;transition:.2s}
+.pinp:focus{border-color:rgba(75,68,224,.5)}
+.pinp::placeholder{color:var(--sub)}
+.btnpri{width:100%;padding:12px;background:var(--grad);border:none;border-radius:12px;
+  color:#fff;font-size:.82rem;font-weight:800;margin-bottom:9px;cursor:pointer}
+.meth{display:flex;align-items:center;gap:12px;padding:13px;background:rgba(255,255,255,.03);
+  border-radius:13px;margin-bottom:9px;cursor:pointer;border:1px solid var(--border);transition:.2s}
+.meth:hover{border-color:rgba(0,210,141,.3);background:rgba(0,210,141,.04)}
+.meth-ico{font-size:1.1rem}
+.meth-b b{font-size:.82rem;display:block;color:var(--text)}
+.meth-b span{font-size:.63rem;color:var(--sub)}
+
+/* ── GOOGLE FORM MODAL ── */
+#m-apply .modal{max-width:600px;padding:16px}
+.form-modal-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.form-modal-hdr h3{font-size:.92rem;margin:0}
+#apply-iframe{width:100%;height:520px;border:none;border-radius:12px;background:#fff}
+@media(max-height:700px){#apply-iframe{height:380px}}
+
+/* ── OVERLAY MODALS (goAPPs style) ── */
+.overlay-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);
+  z-index:9999;align-items:center;justify-content:center;padding:20px;box-sizing:border-box}
+.overlay-modal.show{display:flex}
+.overlay-card{background:var(--card);padding:24px;border-radius:20px;width:100%;
+  max-width:340px;text-align:center;border:1px solid var(--border)}
+.overlay-card h3{margin:0 0 8px;color:var(--text);font-size:1rem}
+.overlay-card p{font-size:.78rem;color:var(--sub);margin:0 0 14px;line-height:1.5}
+.overlay-input{width:100%;padding:12px;margin:6px 0;border-radius:10px;
+  border:1px solid var(--border);background:var(--input-bg);
+  color:var(--text);font-size:.85rem;box-sizing:border-box;outline:none}
+.overlay-btn{width:100%;padding:13px;border-radius:12px;border:none;font-weight:800;font-size:.85rem;cursor:pointer;margin-top:8px}
+.overlay-btn.primary{background:var(--grad);color:#fff}
+.overlay-btn.secondary{background:transparent;color:var(--sub)}
+.overlay-cancel{margin-top:10px;font-size:.78rem;color:var(--sub);cursor:pointer}
+
+/* ── PROFILE ABSTRACT AVATAR ── */
+.profile-avatar canvas{width:100%;height:100%;display:block}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(14px);
+  background:var(--card2);border:1px solid var(--green);color:var(--green);
+  padding:10px 20px;border-radius:20px;font-size:.74rem;font-weight:700;
+  z-index:9999;opacity:0;transition:.28s;white-space:nowrap;box-shadow:0 6px 20px rgba(0,0,0,.4)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div id="splash">
+  <div style="text-align:center;color:#fff">
+    <div style="font-size:2.8rem;margin-bottom:6px">🎓</div>
+    <h1 style="font-size:2rem;font-weight:800;margin:0">goCBT
+      <span style="background:rgba(255,255,255,.2);padding:2px 8px;border-radius:6px;margin-left:6px;font-size:1rem;vertical-align:middle">NG</span>
+    </h1>
+    <div class="spin"></div>
+    <p style="font-size:.7rem;letter-spacing:1px;opacity:.8">LOADING CLASS...</p>
+  </div>
+</div>
+
+<!-- OFFLINE -->
+<div id="offline-screen">
+  <div style="font-size:3.5rem;margin-bottom:16px">📡</div>
+  <h2 style="font-size:1.1rem;margin-bottom:8px">You're Offline</h2>
+  <p style="color:var(--sub);font-size:.78rem;margin-bottom:24px;line-height:1.5;max-width:260px">Check your internet connection to continue using goAPPs.</p>
+  <button onclick="window.location.reload()" style="background:var(--grad);color:#fff;border:none;padding:13px 30px;border-radius:12px;font-size:.82rem;font-weight:800;cursor:pointer">Reload Page</button>
+</div>
+
+<div id="toast-el" class="toast"></div>
+
+<!-- PUSH NOTIFICATION -->
+<div id="push-notif">
+  <div class="notif-ico">🎓</div>
+  <div>
+    <div class="notif-ttl" id="notif-ttl">goCBT</div>
+    <div class="notif-body" id="notif-body">Notification</div>
+  </div>
+  <button onclick="closePush()" style="margin-left:auto;color:var(--sub);font-size:1.1rem;background:none;border:none;cursor:pointer">×</button>
+</div>
+
+<!-- ══════════════════════════════
+     SIDE MENU — goAPPs NG style
+══════════════════════════════ -->
+<div id="menu-overlay" onclick="closeDrw()"></div>
+<div id="side-menu">
+  <div class="side-menu-top">
+    <!-- Support button at top -->
+    <a href="https://wa.me/2348157505037?text=Hello%20goSUPPORT" target="_blank" style="text-decoration:none">
+      <button class="side-support-btn">🤝 goSUPPORT — Get Help</button>
+    </a>
+    <!-- Profile area -->
+    <div class="profile-area" onclick="openProfileModal()">
+      <div class="profile-avatar"><canvas id="profile-canvas" width="96" height="96"></canvas></div>
+      <div>
+        <b id="user-name-profile" style="font-size:.9rem">Learner</b><br>
+        <small style="color:var(--green)">@goCBT_NG · Tap to edit</small>
+      </div>
+    </div>
+  </div>
+
+  <div style="flex:1;overflow-y:auto;scrollbar-width:none">
+    <small style="opacity:.6;text-transform:uppercase;font-size:.6rem;letter-spacing:1px">goCBT</small>
+    <a href="https://goapps-official.github.io/Welcome-to-goAPPs/goCBT/[practice]class_selector.html" class="menu-item"><span>🧠</span> Practice Exam</a>
+    <a href="https://goapps-official.github.io/Welcome-to-goAPPs/goCBT/[EnterClass]class_selector.html" class="menu-item"><span>📝</span> Enter Class</a>
+    <a href="https://goapps-official.github.io/Welcome-to-goAPPs/goCBT/result_checker.html" class="menu-item"><span>📬</span> Result Checker</a>
+    <a href="https://goapps-official.github.io/Welcome-to-goAPPs/goCBT/timetable.html" class="menu-item"><span>🗓️</span> Timetable</a>
+    <a href="https://goapps-official.github.io/Welcome-to-goAPPs/goCBT/tasks.html" class="menu-item"><span>📂</span> Class Task</a>
+    <a href="https://goapps-official.github.io/Welcome-to-goAPPs/HomeApp/login.html" class="menu-item"><span>🔐</span> Facilitator Login</a>
+
+    <div style="margin-top:16px">
+      <small style="opacity:.6;text-transform:uppercase;font-size:.6rem">Settings</small>
+      <div class="menu-item" style="justify-content:space-between"><span>🌓 Light Mode</span><label class="switch"><input type="checkbox" onchange="toggleTheme(this)"><span class="slider-sw"></span></label></div>
+    </div>
+
+    <div style="margin-top:16px">
+      <small style="opacity:.6;text-transform:uppercase;font-size:.6rem">Wallet</small>
+      <div class="menu-item" onclick="openOverlay('wallet-address-modal')"><span>🔗</span> View Wallet Address</div>
+      <div class="menu-item" onclick="openMod('m-topup');closeDrw()"><span>➕</span> Top-up Tokens</div>
+    </div>
+
+    <div style="margin-top:16px">
+      <small style="opacity:.6;text-transform:uppercase;font-size:.6rem">Growth</small>
+      <div class="menu-item" onclick="inviteToGoApps()"><span>🎁</span> Invite to goAPPs</div>
+      <div class="menu-item" onclick="openBizPackageModal()"><span>🤖</span> Business Package</div>
+    </div>
+  </div>
+
+  <div style="padding-top:14px">
+    <a href="https://official-gocbt.github.io/pin_purchase/practice_pin_purchase.html"
+       style="display:block;width:100%;padding:13px;background:var(--grad);border:none;border-radius:12px;
+              color:#fff;font-size:.82rem;font-weight:800;text-align:center;text-decoration:none;
+              box-shadow:var(--glow)" onclick="soundAndHaptic('confirm')">
+      🔢 Buy Study PIN
+    </a>
+  </div>
+</div>
+
+<!-- ══ OVERLAY MODALS ══ -->
+
+<!-- Profile Modal -->
+<div class="overlay-modal" id="profile-modal">
+  <div class="overlay-card">
+    <h3>✏️ Update Profile</h3>
+    <p>Enter your linked WhatsApp number to update your profile.</p>
+    <input class="overlay-input" type="tel" id="profile-wa" placeholder="e.g. 08012345678">
+    <button class="overlay-btn primary" onclick="submitProfile()">Submit via WhatsApp</button>
+    <p class="overlay-cancel" onclick="closeOverlay('profile-modal')">Cancel</p>
+  </div>
+</div>
+
+<!-- Wallet Address Modal -->
+<div class="overlay-modal" id="wallet-address-modal">
+  <div class="overlay-card">
+    <h3>🔗 View Wallet Address</h3>
+    <p>Enter your WhatsApp number to receive your wallet address securely.</p>
+    <input class="overlay-input" type="tel" id="wallet-wa" placeholder="Your WhatsApp number">
+    <button class="overlay-btn primary" onclick="submitWalletAddress()">Send to WhatsApp</button>
+    <p class="overlay-cancel" onclick="closeOverlay('wallet-address-modal')">Cancel</p>
+  </div>
+</div>
+
+<!-- Business Package Modal -->
+<div class="overlay-modal" id="biz-package-modal">
+  <div class="overlay-card">
+    <h3>🤖 Business Package</h3>
+    <p>Automate your business processes by deploying AI for business. Let goAPPs handle operations while you focus on growth.</p>
+    <input class="overlay-input" type="text" id="biz-name" placeholder="Business Name">
+    <input class="overlay-input" type="email" id="biz-email" placeholder="Business Email">
+    <input class="overlay-input" type="tel" id="biz-wa" placeholder="WhatsApp Number">
+    <button class="overlay-btn primary" onclick="submitBizPackage()">Check Status</button>
+    <p class="overlay-cancel" onclick="closeOverlay('biz-package-modal')">Cancel</p>
+  </div>
+</div>
+
+<!-- ══ HEADER ══ -->
+<header class="hdr">
+  <div class="hdr-l">
+    <button class="ham" id="ham" onclick="toggleDrw()"><span></span><span></span><span></span></button>
+    <span class="hdr-logo">🎓 goCBT</span>
+  </div>
+  <div class="hdr-r">
+    <span class="hpill hp-str" id="streak-el">🔥 1d</span>
+    <span class="hpill hp-xp" id="xp-el">⚡ 0 XP</span>
+    <div class="hdr-av" onclick="location.href='https://goapps-official.github.io/Welcome-to-goAPPs/HomeApp/settings.html'">
+      <canvas id="hdr-avatar-canvas" width="64" height="64" style="width:100%;height:100%;display:block;border-radius:50%"></canvas>
+    </div>
+  </div>
+</header>
+
+<!-- ══ RSS TICKER (faster) ══ -->
+<div class="ticker-wrap">
+  <div class="ticker-track" id="ticker-track"></div>
+</div>
+
+<!-- ══ MAIN ══ -->
+<div class="main" style="padding:15px 15px 10px">
+
+  <!-- Balance Card -->
+  <div class="bal-card" id="bal-card">
+    <div class="bc-wlc">Welcome to Class,</div>
+    <div class="bc-name" id="bc-name">Learner 👋</div>
+    <div class="bc-row"><span>Balance</span><span id="bc-bal">₦***.00</span></div>
+    <div class="bc-row"><span>Bonus</span><span>🏆 2.00gc</span></div>
+    <div class="bc-total">
+      <span class="bc-tlbl">💰 Total Token</span>
+      <span class="bc-tval" id="bc-total">₦1,000</span>
+    </div>
+    <a href="https://goapps-official.github.io/Welcome-to-goAPPs/HomeApp/balance.html" class="bc-add" onclick="soundAndHaptic('tap')">+</a>
+  </div>
+
+  <!-- IMAGE BANNER SLIDER -->
+  <div class="banner-wrap" id="banner-wrap">
+    <button class="banner-arrow prev" onclick="bannerMove(-1);soundAndHaptic('tap')">‹</button>
+    <button class="banner-arrow next" onclick="bannerMove(1);soundAndHaptic('tap')">›</button>
+    <div class="banner-track" id="banner-track">
+      <div class="banner-slide bs-color-1">
+        <div class="bs-overlay">
+          <span class="bs-tag">🔥 NEW</span>
+          <div class="bs-title">JAMB 2026 Practice Now</div>
+          <div class="bs-sub">Over 10,000 past questions · AI-powered</div>
+        </div>
+      </div>
+      <div class="banner-slide bs-color-2">
+        <div class="bs-overlay">
+          <span class="bs-tag">📝 WAEC</span>
+          <div class="bs-title">WAEC Prep — Mock Exams Live</div>
+          <div class="bs-sub">Complete all subjects in one platform</div>
+        </div>
+      </div>
+      <div class="banner-slide bs-color-3">
+        <div class="bs-overlay">
+          <span class="bs-tag">💳 PIN</span>
+          <div class="bs-title">Get Your Study PIN Today</div>
+          <div class="bs-sub">Unlimited access for the full term</div>
+        </div>
+      </div>
+      <div class="banner-slide bs-color-4">
+        <div class="bs-overlay">
+          <span class="bs-tag">🏆 RESULT</span>
+          <div class="bs-title">Check Your CBT Results Instantly</div>
+          <div class="bs-sub">Real-time grading · Detailed breakdown</div>
+        </div>
+      </div>
+    </div>
+    <div class="banner-dots" id="banner-dots"></div>
+  </div>
+
+  <!-- Info Banner -->
+  <div class="info-banner">
+    <span style="font-size:1.4rem;flex-shrink:0">ℹ️</span>
+    <p>Enjoy millions of educational materials, exam prep resources, and live class support — all in one place.</p>
+  </div>
+
+  <!-- Apply Card — opens iframe modal -->
+  <div class="apply-card" onclick="openApplyModal()">
+    <div class="apply-icon">📋</div>
+    <div>
+      <b>Apply to Study</b>
+      <small>Register for any examination and pass with flying colours.</small>
+    </div>
+    <span class="apply-arr">›</span>
+  </div>
+
+  <!-- Service Grid -->
+  <div class="sec-hdr"><span class="sec-ttl">Select an Option</span></div>
+  <div class="svc-grid">
+
+    <a href="https://goapps-official.github.io/Welcome-to-goAPPs/goCBT/[practice]class_selector.html" class="svc-item hi" onclick="soundAndHaptic('tap')">
+      <span class="s-ico">🧠</span>
+      <div><span class="s-name">Practice Exam</span><span class="s-sub">Start Test</span></div>
+    </a>
+
+    <a href="https://goapps-official.github.io/Welcome-to-goAPPs/goCBT/[EnterClass]class_selector.html" class="svc-item" onclick="soundAndHaptic('tap')">
+      <span class="s-ico">📝</span>
+      <div><span class="s-name">Enter Class</span><span class="s-sub">Start Learning</span></div>
+    </a>
+
+    <a href="https://goapps-official.github.io/Welcome-to-goAPPs/goCBT/result_checker.html" class="svc-item" onclick="soundAndHaptic('tap')">
+      <span class="s-ico">📬</span>
+      <div><span class="s-name">Result Checker</span><span class="s-sub">Check Now</span></div>
+    </a>
+
+    <a href="https://official-gocbt.github.io/pin_purchase/practice_pin_purchase.html" class="svc-item hi" onclick="soundAndHaptic('confirm')">
+      <span class="s-ico">🔢</span>
+      <div><span class="s-name">Purchase PIN</span><span class="s-sub">Buy NOW</span></div>
+    </a>
+
+    <a href="https://goapps-official.github.io/Welcome-to-goAPPs/goCBT/tasks.html" class="svc-item hi" onclick="soundAndHaptic('tap')">
+      <span class="s-ico">📂</span>
+      <div><span class="s-name">Class Task</span><span class="s-sub">Submit NOW</span></div>
+    </a>
+
+    <a href="https://goapps-official.github.io/Welcome-to-goAPPs/goCBT/timetable.html" class="svc-item" onclick="soundAndHaptic('tap')">
+      <span class="s-ico">🗓️</span>
+      <div><span class="s-name">Timetable</span><span class="s-sub">Check Schedule</span></div>
+    </a>
+
+    <a href="https://goapps-official.github.io/Welcome-to-goAPPs/HomeApp/login.html" class="svc-item hi" onclick="soundAndHaptic('tap')">
+      <span class="s-ico">🔐</span>
+      <div><span class="s-name">Facilitator</span><span class="s-sub">Admin Login</span></div>
+    </a>
+
+    <a href="https://wa.me/2348157505037?text=Hello%20goSUPPORT" class="svc-item hi" onclick="soundAndHaptic('confirm')">
+      <span class="s-ico">🤝</span>
+      <div><span class="s-name">goSUPPORT</span><span class="s-sub">Get Help</span></div>
+    </a>
+
+  </div>
+
+  <!-- Promo Strip -->
+  <div class="promo-strip">
+    <a href="https://goapps-official.github.io/Welcome-to-goAPPs/goCBT/pin_purchase.html" class="promo-btn" onclick="soundAndHaptic('confirm')">
+      🔢 Get your Study PIN now! →
+    </a>
+  </div>
+
+</div><!-- /main -->
+
+<!-- ══ BOTTOM NAV — goAPPs NG style ══ -->
+<nav class="bnav">
+  <a href="https://goapps-official.github.io/Welcome-to-goAPPs/HomeApp/reward.html" class="bn" onclick="soundAndHaptic('tap')"><span class="bn-ico">🎁</span>Rewards</a>
+  <a href="https://goapps-official.github.io/Welcome-to-goAPPs/HomeApp/balance.html" class="bn" onclick="soundAndHaptic('tap')"><span class="bn-ico">💰</span>Wallet</a>
+  <a href="https://goapps-official.github.io/Welcome-to-goAPPs/" class="bn on" onclick="soundAndHaptic('tap')"><span class="bn-ico">🏧</span>Home</a>
+  <a href="https://goapps-official.github.io/Welcome-to-goAPPs/HomeApp/transfer.html" class="bn" onclick="soundAndHaptic('tap')"><span class="bn-ico">📊</span>Market</a>
+  <a href="https://goapps-official.github.io/Welcome-to-goAPPs/HomeApp/settings.html" class="bn" onclick="soundAndHaptic('tap')"><span class="bn-ico">⚙️</span>Settings</a>
+</nav>
+
+<!-- ══ MODAL: TOPUP ══ -->
+<div id="m-topup" class="mov">
+  <div class="modal">
+    <button class="mcl" onclick="closeMod('m-topup')">×</button>
+    <h3 style="margin-bottom:16px;font-size:.92rem">💳 Choose Top-up Method</h3>
+    <div class="meth" onclick="soundAndHaptic('confirm');closeMod('m-topup');window.open('https://official-gocbt.github.io/pin_purchase/practice_pin_purchase.html','_blank')">
+      <span class="meth-ico">🔢</span>
+      <div class="meth-b"><b>Buy Study PIN</b><span>Purchase online and redeem instantly</span></div>
+    </div>
+    <div class="meth" onclick="soundAndHaptic('confirm');closeMod('m-topup');window.open('https://wa.me/2348157505037?text=I%20want%20to%20purchase%20a%20goCBT%20PIN','_blank')">
+      <span class="meth-ico">💳</span>
+      <div class="meth-b"><b>Purchase via WhatsApp</b><span>Contact admin to buy a new PIN</span></div>
+    </div>
+    <p onclick="closeMod('m-topup')" style="text-align:center;margin-top:12px;font-size:.7rem;cursor:pointer;color:var(--sub)">Cancel</p>
+  </div>
+</div>
+
+<!-- ══ MODAL: APPLY TO STUDY (iframe) ══ -->
+<div id="m-apply" class="mov">
+  <div class="modal" style="max-width:600px;padding:16px;width:96%">
+    <div class="form-modal-hdr">
+      <h3 style="font-size:.92rem;margin:0">📋 Apply to Study</h3>
+      <button class="mcl" onclick="closeMod('m-apply');soundAndHaptic('tap')" style="float:none">×</button>
+    </div>
+    <iframe id="apply-iframe"
+      src="https://docs.google.com/forms/d/e/1FAIpQLSf8PxRtz4MWmYk4ZdS9uBSf6eh224_HjQfUQibxhqBL46I2pw/viewform?embedded=true"
+      width="100%" frameborder="0" marginheight="0" marginwidth="0"
+      style="width:100%;height:520px;border:none;border-radius:12px;background:#fff">
+      Loading form…
+    </iframe>
+    <p onclick="closeMod('m-apply')" style="text-align:center;margin-top:10px;font-size:.7rem;cursor:pointer;color:var(--sub)">Close</p>
+  </div>
+</div>
+
+<script>
+const MAINTENANCE = 'https://goapps-official.github.io/Welcome-to-goAPPs/%E2%9A%92%EF%B8%8FgoAPPs-Repair%20Mode.html';
+const SUPPORT_WA  = '2348157505037';
+
+// ── SOUND + HAPTIC ──
+function playChime(type='confirm'){
+  try{
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    const configs={
+      confirm:[[523.25,0],[659.25,.12],[783.99,.24]],
+      success:[[783.99,0],[987.77,.15]],
+      error:[[349.23,0],[277.18,.12]],
+      notify:[[880,0,.18],[659.25,.22,.24]],
+      tap:[[1046.5,0,.18]]
+    };
+    const notes=configs[type]||configs.tap;
+    notes.forEach(([freq,delay,dur=.42])=>{
+      const osc=ctx.createOscillator();
+      const gn=ctx.createGain();
+      osc.connect(gn);gn.connect(ctx.destination);
+      osc.type='sine';
+      osc.frequency.setValueAtTime(freq,ctx.currentTime+delay);
+      gn.gain.setValueAtTime(0,ctx.currentTime+delay);
+      gn.gain.linearRampToValueAtTime(.2,ctx.currentTime+delay+.02);
+      gn.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+delay+dur);
+      osc.start(ctx.currentTime+delay);
+      osc.stop(ctx.currentTime+delay+dur+.02);
+    });
+  }catch(e){}
+}
+function triggerHaptic(pattern=[50,30,50]){if(navigator.vibrate)navigator.vibrate(pattern);}
+function soundAndHaptic(type='confirm'){playChime(type);triggerHaptic();}
+
+// ── HELPERS ──
+const el=id=>document.getElementById(id);
+function openMod(id){el(id).classList.add('open');soundAndHaptic('tap');}
+function closeMod(id){el(id).classList.remove('open');}
+function openOverlay(id){el(id).classList.add('show');soundAndHaptic('tap');}
+function closeOverlay(id){el(id).classList.remove('show');}
+function showToast(msg){const t=el('toast-el');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3200);}
+function goWhatsApp(num,msg){window.open(`https://wa.me/${num}?text=${encodeURIComponent(msg)}`,'_blank');}
+
+// ── SPLASH ──
+document.addEventListener('DOMContentLoaded',()=>{
+  setTimeout(()=>{
+    const s=el('splash');s.classList.add('hide');
+    setTimeout(()=>s.style.display='none',600);
+  },1400);
+  // draw abstract avatar
+  drawAbstractAvatar(el('profile-canvas'));
+  drawAbstractAvatar(el('hdr-avatar-canvas'));
+  // load persistence
+  const name=localStorage.getItem('gc_name')||'Learner';
+  el('bc-name').textContent=name+' 👋';
+  el('d-name') && (el('d-name').textContent=name);
+  el('user-name-profile').textContent=name;
+  const w=parseInt(localStorage.getItem('gc_wallet')||'1000');
+  const fmt='₦'+w.toLocaleString();
+  el('bc-total').textContent=fmt;
+  const s=parseInt(localStorage.getItem('gc_streak')||'1');
+  el('streak-el').textContent='🔥 '+s+'d';
+});
+
+// ── ABSTRACT AVATAR ──
+function drawAbstractAvatar(canvas){
+  if(!canvas)return;
+  const ctx=canvas.getContext('2d');
+  const w=canvas.width,h=canvas.height;
+  const seed=parseInt(localStorage.getItem('gc_avatar_seed')||String(Math.floor(Math.random()*9999)));
+  localStorage.setItem('gc_avatar_seed',seed);
+  const r=n=>{let x=Math.sin(seed+n)*10000;return x-Math.floor(x);};
+  const hue1=Math.floor(r(1)*360),hue2=Math.floor(r(2)*360);
+  const grd=ctx.createLinearGradient(0,0,w,h);
+  grd.addColorStop(0,`hsl(${hue1},70%,35%)`);
+  grd.addColorStop(1,`hsl(${hue2},80%,45%)`);
+  ctx.fillStyle=grd;ctx.fillRect(0,0,w,h);
+  for(let i=0;i<6;i++){
+    ctx.beginPath();
+    const cx=r(i*3)*w,cy=r(i*3+1)*h,rad=r(i*3+2)*35+8;
+    ctx.arc(cx,cy,rad,0,Math.PI*2);
+    ctx.fillStyle=`hsla(${Math.floor(r(i*5)*360)},80%,70%,0.3)`;
+    ctx.fill();
+  }
+  ctx.fillStyle='rgba(255,255,255,0.85)';
+  ctx.font=`bold ${Math.floor(w*.38)}px Inter,sans-serif`;
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('G',w/2,h/2);
+}
+
+// ── PUSH NOTIFICATION ──
+function pushNotif(title,body){
+  el('notif-ttl').textContent=title;
+  el('notif-body').textContent=body;
+  el('push-notif').classList.add('show');
+  triggerHaptic([50,30,50]);
+  setTimeout(()=>el('push-notif').classList.remove('show'),4500);
+}
+function closePush(){el('push-notif').classList.remove('show');}
+
+// ── ONLINE / OFFLINE ──
+window.addEventListener('online',()=>{el('offline-screen').classList.remove('show');pushNotif('⚡ Connected','Connection restored!');});
+window.addEventListener('offline',()=>el('offline-screen').classList.add('show'));
+if(!navigator.onLine)el('offline-screen').classList.add('show');
+
+// ── DRAWER / SIDE MENU ──
+function toggleDrw(){
+  el('side-menu').classList.toggle('open');
+  el('menu-overlay').classList.toggle('open');
+  el('ham').classList.toggle('open');
+  soundAndHaptic('tap');
+}
+function closeDrw(){
+  el('side-menu').classList.remove('open');
+  el('menu-overlay').classList.remove('open');
+  el('ham').classList.remove('open');
+}
+
+// ── THEME TOGGLE ──
+function toggleTheme(chk){
+  document.body.classList.toggle('light-mode-cbt',chk.checked);
+  soundAndHaptic('tap');
+}
+
+// ── INVITE ──
+function inviteToGoApps(){
+  soundAndHaptic('confirm');
+  if(navigator.share){
+    navigator.share({title:'goAPPs Nigeria',text:'Join me on goAPPs — Nigeria\'s all-in-one digital wallet & services platform! 🚀',url:'https://goapps-official.github.io/Welcome-to-goAPPs/'}).catch(()=>{});
+  } else {
+    navigator.clipboard.writeText('https://goapps-official.github.io/Welcome-to-goAPPs/').then(()=>showToast('goAPPs link copied!'));
+  }
+}
+
+// ── PROFILE ──
+function openProfileModal(){closeDrw();openOverlay('profile-modal');}
+function submitProfile(){
+  const num=el('profile-wa').value.trim();
+  if(!num){alert('Enter your WhatsApp number');return;}
+  soundAndHaptic('confirm');
+  closeOverlay('profile-modal');
+  goWhatsApp(SUPPORT_WA,`Profile Update Request\nWhatsApp: ${num}`);
+}
+
+// ── WALLET ADDRESS ──
+function submitWalletAddress(){
+  const num=el('wallet-wa').value.trim();
+  if(!num){alert('Enter your WhatsApp number');return;}
+  soundAndHaptic('confirm');
+  closeOverlay('wallet-address-modal');
+  goWhatsApp(SUPPORT_WA,`Wallet Address Request\nWhatsApp: ${num}`);
+}
+
+// ── BUSINESS PACKAGE ──
+function openBizPackageModal(){closeDrw();openOverlay('biz-package-modal');}
+function submitBizPackage(){
+  const name=el('biz-name').value.trim();
+  const email=el('biz-email').value.trim();
+  const wa=el('biz-wa').value.trim();
+  if(!name||!email||!wa){alert('Please fill in all fields');return;}
+  soundAndHaptic('confirm');
+  closeOverlay('biz-package-modal');
+  goWhatsApp(SUPPORT_WA,`Business Package Request\nBusiness: ${name}\nEmail: ${email}\nWhatsApp: ${wa}`);
+}
+
+// ── APPLY TO STUDY — iframe modal ──
+function openApplyModal(){
+  soundAndHaptic('confirm');
+  openMod('m-apply');
+}
+
+// ── RSS TICKER ──
+const RSS_ITEMS=[
+  '📢 JAMB 2026 registration now open — Apply to Study today!',
+  '🏆 100+ students scored 300+ in last month\'s Practice Exam',
+  '🔢 New Study PINs available — buy yours now for full access',
+  '📬 WAEC 2026 timetable is now live — check yours under Timetable',
+  '🧠 Practice Mode updated with 5,000 new questions this week',
+  '📂 Submit your Class Task before the deadline — check Tasks tab',
+  '⚡ System upgrade complete — faster load times across all pages',
+  '🎓 Welcome to goCBT NG — your smart CBT learning companion!',
+  '📝 Enter Class feature now supports JSS 1 through SSS 3',
+  '🤝 Need help? Contact goSUPPORT on WhatsApp anytime',
+];
+(function buildTicker(){
+  const track=el('ticker-track');
+  const all=[...RSS_ITEMS,...RSS_ITEMS];
+  track.innerHTML=all.map(t=>`<span class="ticker-item"><span class="ticker-dot"></span>${t}</span>`).join('');
+})();
+
+// ── IMAGE BANNER SLIDER ──
+let bannerIdx=0;
+const SLIDE_COUNT=4;
+function buildDots(){
+  const wrap=el('banner-dots');wrap.innerHTML='';
+  for(let i=0;i<SLIDE_COUNT;i++){
+    const d=document.createElement('div');
+    d.className='b-dot'+(i===0?' on':'');
+    d.onclick=(()=>{const ii=i;return()=>{goSlide(ii);soundAndHaptic('tap');};})();
+    wrap.appendChild(d);
+  }
+}
+function goSlide(idx){
+  bannerIdx=(idx+SLIDE_COUNT)%SLIDE_COUNT;
+  el('banner-track').style.transform=`translateX(-${bannerIdx*100}%)`;
+  document.querySelectorAll('.b-dot').forEach((d,i)=>d.classList.toggle('on',i===bannerIdx));
+}
+function bannerMove(dir){goSlide(bannerIdx+dir);}
+buildDots();
+let bannerTimer=setInterval(()=>bannerMove(1),4000);
+el('banner-wrap').addEventListener('touchstart',()=>clearInterval(bannerTimer),{passive:true});
+(function(){
+  let sx=0;
+  const track=el('banner-track');
+  track.addEventListener('touchstart',e=>{sx=e.touches[0].clientX;},{passive:true});
+  track.addEventListener('touchend',e=>{const dx=e.changedTouches[0].clientX-sx;if(Math.abs(dx)>40)bannerMove(dx<0?1:-1);},{passive:true});
+})();
+
+// ── WELCOME PUSH ──
+setTimeout(()=>{pushNotif('🎓 Welcome back!','Your study streak is active. Keep it up!');},2200);
+
+// ── PWA ──
+let dp;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();dp=e;});
+if('serviceWorker' in navigator)
+  window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));
+</script>
+</body>
+</html>

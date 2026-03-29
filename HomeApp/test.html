@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>goCBT Course Library</title>
+    <style>
+        :root { --opay-green: #00d28d; --text-dark: #333; --text-light: #888; --danger: #fa5252; }
+        body { font-family: 'Segoe UI', Roboto, sans-serif; background: #f4f7f6; margin: 0; padding: 15px; }
+        
+        /* Pulse Animation */
+        @keyframes live-pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 210, 141, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(0, 210, 141, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 210, 141, 0); }
+        }
+
+        /* Card & UI Elements */
+        .topic-card {
+            background: white; border-radius: 18px; padding: 18px; margin-bottom: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06); position: relative; border: 1px solid #eee;
+        }
+        .filter-btn {
+            padding: 8px 18px; border-radius: 20px; border: 1px solid #eee; background: white;
+            font-size: 0.8rem; font-weight: 600; cursor: pointer; white-space: nowrap;
+        }
+        .filter-btn.active { background: var(--opay-green); color: white; border-color: var(--opay-green); }
+        
+        .score-badge { position: absolute; top: 15px; right: 15px; padding: 4px 10px; border-radius: 20px; font-size: 0.65rem; font-weight: 800; }
+        .score-high { background: #e6fcf5; color: #00d28d; }
+        .score-mid { background: #fff9db; color: #f08c00; }
+
+        /* Video Lightbox Overlay */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); z-index: 9999; display: none; align-items: center; justify-content: center;
+        }
+        
+        .action-icon {
+            width: 35px; height: 35px; background: #f0f2f5; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; cursor: pointer;
+            transition: 0.3s;
+        }
+        .action-icon:hover { background: var(--opay-green); color: white; }
+    </style>
+</head>
+<body>
+
+    <div style="margin: 10px 0 20px;">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 15px;">
+            <span style="width: 10px; height: 10px; background: var(--opay-green); border-radius: 50%; animation: live-pulse 2s infinite;"></span>
+            <span id="last-updated" style="font-size: 0.7rem; color: var(--text-light); font-weight: 700;">LIBRARY UPDATED: FEB 2026</span>
+        </div>
+        
+        <div style="background: white; padding: 15px; border-radius: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                <small style="font-weight: 700;">Total Course Progress</small>
+                <small id="progress-percent" style="color: var(--opay-green); font-weight: 800;">0%</small>
+            </div>
+            <div style="width: 100%; height: 8px; background: #eee; border-radius: 10px; overflow: hidden;">
+                <div id="progress-fill" style="width: 0%; height: 100%; background: var(--opay-green); transition: 0.5s;"></div>
+            </div>
+            <button id="download-cert-btn" disabled style="width: 100%; margin-top: 15px; padding: 10px; border-radius: 10px; border: none; background: #ddd; color: white; font-weight: 700; font-size: 0.75rem;">
+                🎓 Unlock Certificate (100%)
+            </button>
+        </div>
+    </div>
+
+    <input type="text" id="topicSearch" placeholder="🔍 Search topics..." style="width: 100%; padding: 12px 15px; border-radius: 12px; border: 1px solid #eee; margin-bottom: 15px; box-sizing: border-box;">
+    
+    <div style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 15px; margin-bottom: 10px;">
+        <button class="filter-btn active" onclick="filterClass('all', this)">All</button>
+        <button class="filter-btn" onclick="filterClass('jss1', this)">JSS 1</button>
+        <button class="filter-btn" onclick="filterClass('jss2', this)">JSS 2</button>
+        <button class="filter-btn" onclick="filterClass('jss3', this)">JSS 3</button>
+    </div>
+
+    <div id="topicsContainer">
+        <div class="topic-card" data-class="jss1" data-score="85">
+            <span class="score-badge score-high">Score: 85%</span>
+            <b style="display: block; font-size: 0.95rem; max-width: 80%;">Digital Tech: Introduction (Paper 1)</b>
+            <small style="color: var(--text-light); display: block; margin: 4px 0 12px;">⭐ 5.0 | 879 Students</small>
+            
+            <audio controls style="width: 100%; height: 35px; margin-bottom: 15px;">
+                <source src="your-audio-link.mp3" type="audio/mpeg">
+            </audio>
+
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <button onclick="openVideo('dQw4w9WgXcQ')" style="background: #333; color: white; border: none; padding: 8px 15px; border-radius: 8px; font-size: 0.75rem; font-weight: 600; cursor: pointer;">
+                    ▶️ Watch Video
+                </button>
+                <div class="action-icon" onclick="showTaskPanel('Digital Tech Paper 1')">
+                    <span style="font-size: 1.2rem;">📂</span>
+                </div>
+            </div>
+            <span class="completion-status" data-video-id="dQw4w9WgXcQ" style="display:none; font-size: 0.6rem; color: var(--opay-green); margin-top: 8px;"></span>
+        </div>
+
+        </div>
+
+    <div id="video-popup" class="modal-overlay">
+        <div style="width: 90%; max-width: 500px; position: relative;">
+            <span onclick="closeVideo()" style="position: absolute; top: -40px; right: 0; color: white; font-size: 2.5rem; cursor: pointer;">&times;</span>
+            <iframe id="video-iframe" width="100%" style="aspect-ratio: 16/9; border-radius: 12px;" src="" frameborder="0" allowfullscreen></iframe>
+        </div>
+    </div>
+
+    <div id="task-panel" class="modal-overlay" style="background: rgba(0,0,0,0.6);">
+        <div style="background: white; width: 85%; padding: 25px; border-radius: 20px; text-align: center;">
+            <h3 id="task-title" style="margin-top: 0;">Task Dashboard</h3>
+            <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 20px;">
+                <button onclick="window.location.href='#'" style="padding: 15px; border-radius: 12px; border: none; background: #f0f2f5; font-weight: 700;">📝 Start Practice Quiz</button>
+                <button onclick="alert('Open Upload Modal')" style="padding: 15px; border-radius: 12px; border: none; background: var(--opay-green); color: white; font-weight: 700;">📤 Submit Task</button>
+                <button onclick="document.getElementById('task-panel').style.display='none'" style="margin-top: 10px; background: none; border: none; color: var(--text-light);">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openVideo(id) {
+            const modal = document.getElementById('video-popup');
+            document.getElementById('video-iframe').src = `https://www.youtube.com/embed/${id}?autoplay=1`;
+            modal.style.display = 'flex';
+            window.currentVid = id;
+        }
+
+        function closeVideo() {
+            document.getElementById('video-popup').style.display = 'none';
+            document.getElementById('video-iframe').src = "";
+            localStorage.setItem(`video_${window.currentVid}_done`, 'true');
+            updateProgress();
+        }
+
+        function showTaskPanel(title) {
+            document.getElementById('task-title').innerText = title;
+            document.getElementById('task-panel').style.display = 'flex';
+        }
+
+        function filterClass(cls, btn) {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            document.querySelectorAll('.topic-card').forEach(card => {
+                card.style.display = (cls === 'all' || card.dataset.class === cls) ? 'block' : 'none';
+            });
+        }
+
+        function updateProgress() {
+            const cards = document.querySelectorAll('.topic-card');
+            let done = 0;
+            cards.forEach(card => {
+                const vidId = card.querySelector('button').getAttribute('onclick').match(/'([^']+)'/)[1];
+                if (localStorage.getItem(`video_${vidId}_done`)) {
+                    done++;
+                    card.querySelector('.completion-status').style.display = 'block';
+                    card.querySelector('.completion-status').innerText = '✅ Completed';
+                }
+            });
+            const percent = Math.round((done / cards.length) * 100);
+            document.getElementById('progress-fill').style.width = percent + '%';
+            document.getElementById('progress-percent').innerText = percent + '%';
+            if(percent === 100) {
+                const btn = document.getElementById('download-cert-btn');
+                btn.disabled = false; btn.style.background = '#00d28d'; btn.innerText = '🏆 Download Certificate';
+            }
+        }
+
+        document.getElementById('topicSearch').addEventListener('input', (e) => {
+            const val = e.target.value.toLowerCase();
+            document.querySelectorAll('.topic-card').forEach(card => {
+                const title = card.querySelector('b').innerText.toLowerCase();
+                card.style.display = title.includes(val) ? 'block' : 'none';
+            });
+        });
+
+        window.onload = updateProgress;
+    </script>
+</body>
+</html>
